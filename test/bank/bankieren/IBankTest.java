@@ -6,6 +6,8 @@
 package bank.bankieren;
 
 import fontys.util.NumberDoesntExistException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -56,6 +58,17 @@ public class IBankTest {
         IRekening rekening = bank.getRekening(result);
         assertTrue("Check if rekening owner = name",rekening.getEigenaar().getNaam().equals(naam));
     }
+    
+    @Test
+    public void testOpenRekeningInvallid(){
+        System.out.println("openRekeningInvallid");
+        assertEquals("Empty name",bank.openRekening("", "test"),-1);
+        assertEquals("Empty city",bank.openRekening("test", ""),-1);
+        assertEquals("Empty name and city",bank.openRekening("", ""),-1);
+        assertEquals("Null name",bank.openRekening(null, "test"),-1);
+        assertEquals("Null city",bank.openRekening("test", null),-1);
+        assertEquals("Null name and city",bank.openRekening(null, null),-1);
+    }
 
     /**
      * Test of maakOver method, of class IBank.
@@ -91,6 +104,46 @@ public class IBankTest {
         int bestemming = bank.openRekening("Test2", "Test");
         Money bedrag = new Money(100L,"");
         fail("No error thrown!");
+    }
+    
+    @Test
+    public void testMaakOverAbuse(){
+        int bron = bank.openRekening("TestAbuse1", "Test");
+        int target = bank.openRekening("TestAbuse2", "Test");
+        
+        //bron==target
+        try{
+            assertFalse(bank.maakOver(bron, bron, new Money(10L,"€")));
+            fail();//should not be reached
+        }catch(RuntimeException ex){
+            //all is good :)
+        } catch (NumberDoesntExistException ex) {
+            Logger.getLogger(IBankTest.class.getName()).log(Level.SEVERE, null, ex);
+            fail();//dafuq happened!
+        }
+        
+        //negativ money
+        try{
+            assertFalse(bank.maakOver(bron, target, new Money(-10L,"€")));
+            fail();//should not be reached
+        }catch(RuntimeException ex){
+            //all is good :)
+        } catch (NumberDoesntExistException ex) {
+            Logger.getLogger(IBankTest.class.getName()).log(Level.SEVERE, null, ex);
+            fail();//dafuq happened!
+        }
+        
+        //non existend source
+        try{
+            assertFalse(bank.maakOver(-1, target, new Money(10L,"€")));
+            fail();//should not be reached
+        }catch(RuntimeException ex){
+            Logger.getLogger(IBankTest.class.getName()).log(Level.SEVERE, null, ex);
+            fail();//dafuq happened!
+        } catch (NumberDoesntExistException ex) {
+            
+            //all is good
+        }
     }
 
     /**
