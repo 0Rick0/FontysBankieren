@@ -3,6 +3,7 @@ package bank.internettoegang;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import bank.bankieren.IRekening;
+import bank.bankieren.IRekeningUpdateListener;
 import bank.bankieren.Money;
 import fontys.util.InvalidSessionException;
 import fontys.util.NumberDoesntExistException;
@@ -49,4 +50,8 @@ public interface IBankiersessie extends Remote {
 	 * @throws RemoteException
 	 */
 	IRekening getRekening() throws InvalidSessionException, RemoteException;
+        
+        void addListener(IRekeningUpdateListener listener) throws RemoteException;
+        
+        void removeListener(IRekeningUpdateListener listener) throws RemoteException;
 }

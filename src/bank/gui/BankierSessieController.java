@@ -6,6 +6,7 @@
 package bank.gui;
 
 import bank.bankieren.IRekening;
+import bank.bankieren.IRekeningUpdateListener;
 import bank.bankieren.Money;
 import bank.internettoegang.IBalie;
 import bank.internettoegang.IBankiersessie;
@@ -13,9 +14,11 @@ import fontys.util.InvalidSessionException;
 import fontys.util.NumberDoesntExistException;
 import java.net.URL;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -29,8 +32,11 @@ import javafx.scene.control.TextField;
  *
  * @author frankcoenen
  */
-public class BankierSessieController implements Initializable {
+public class BankierSessieController extends UnicastRemoteObject implements Initializable, IRekeningUpdateListener {
 
+    public BankierSessieController()throws RemoteException {
+    }
+    
     @FXML
     private Hyperlink hlLogout;
 
@@ -66,6 +72,7 @@ public class BankierSessieController implements Initializable {
             String eigenaar = rekening.getEigenaar().getNaam() + " te "
                     + rekening.getEigenaar().getPlaats();
             tfNameCity.setText(eigenaar);
+            
         } catch (InvalidSessionException ex) {
             taMessage.setText("bankiersessie is verlopen");
             Logger.getLogger(BankierSessieController.class.getName()).log(Level.SEVERE, null, ex);
@@ -88,6 +95,7 @@ public class BankierSessieController implements Initializable {
         try {
             sessie.logUit();
             application.gotoLogin(balie, "");
+            UnicastRemoteObject.unexportObject(this, true);
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -110,5 +118,10 @@ public class BankierSessieController implements Initializable {
             e1.printStackTrace();
             taMessage.setText(e1.getMessage());
         }
+    }
+
+    @Override
+    public void updateBalance(Money value) {
+        Platform.runLater(()->tfBalance.setText(value+""));
     }
 }

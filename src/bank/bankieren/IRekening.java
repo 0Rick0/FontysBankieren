@@ -7,5 +7,7 @@ public interface IRekening extends Serializable {
   Money getSaldo();
   IKlant getEigenaar();
   int getKredietLimietInCenten();
+  void addListener(IRekeningUpdateListener listener);
+  void removeListener(IRekeningUpdateListener listener);
 }
 

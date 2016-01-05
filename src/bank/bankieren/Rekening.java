@@ -1,5 +1,11 @@
 package bank.bankieren;
 
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 class Rekening implements IRekeningTbvBank {
 
     private static final long serialVersionUID = 7221569686169173632L;
@@ -7,6 +13,7 @@ class Rekening implements IRekeningTbvBank {
     private int nr;
     private IKlant eigenaar;
     private Money saldo;
+    private transient List<IRekeningUpdateListener> listeners;
 
     /**
      * creatie van een bankrekening met saldo van 0.0<br>
@@ -35,6 +42,7 @@ class Rekening implements IRekeningTbvBank {
         this.nr = number;
         this.eigenaar = klant;
         this.saldo = saldo;
+        listeners = new ArrayList<>();
     }
 
     public boolean equals(Object obj) {
@@ -67,7 +75,15 @@ class Rekening implements IRekeningTbvBank {
         }
 
         if (isTransferPossible(bedrag)) {
+            
             saldo = Money.sum(saldo, bedrag);
+            listeners.forEach((l)->{
+                try {
+                    l.updateBalance(saldo);
+                } catch (RemoteException ex) {
+                    Logger.getLogger(Rekening.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
             return true;
         }
         return false;
@@ -76,5 +92,15 @@ class Rekening implements IRekeningTbvBank {
     @Override
     public int getKredietLimietInCenten() {
         return KREDIETLIMIET;
+    }
+
+    @Override
+    public void addListener(IRekeningUpdateListener listener) {
+        listeners.add(listener);
+    }
+
+    @Override
+    public void removeListener(IRekeningUpdateListener listener) {
+        listeners.remove(listener);
     }
 }

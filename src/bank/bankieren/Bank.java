@@ -109,4 +109,14 @@ public class Bank implements IBank {
         return name;
     }
 
+    @Override
+    public void addListener(int rekeningNr, IRekeningUpdateListener listener) {
+        getRekening(rekeningNr).addListener(listener);
+    }
+
+    @Override
+    public void removeListener(int rekeningNr, IRekeningUpdateListener listener) {
+        getRekening(rekeningNr).removeListener(listener);
+    }
+
 }

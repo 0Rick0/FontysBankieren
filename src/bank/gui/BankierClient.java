@@ -112,6 +112,7 @@ public class BankierClient extends Application {
         try {
             BankierSessieController sessionController = (BankierSessieController) replaceSceneContent("BankierSessie.fxml");
             sessionController.setApp(this, balie, sessie);
+            sessie.addListener(sessionController);
         } catch (Exception ex) {
             Logger.getLogger(BankierClient.class.getName()).log(Level.SEVERE, null, ex);
         }

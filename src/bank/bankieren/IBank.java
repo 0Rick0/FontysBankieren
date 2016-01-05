@@ -45,7 +45,10 @@ public interface IBank {
      * @return de bankrekening met nummer nr mits bij deze bank bekend, anders null
      */
     IRekening getRekening(int nr);
+    
+    void addListener(int rekeningNr, IRekeningUpdateListener listener);
 
+    void removeListener(int rekeningNr, IRekeningUpdateListener listener);
     /**
      * @return de naam van deze bank
      */
