@@ -49,8 +49,9 @@ public class Bankiersessie extends UnicastRemoteObject implements
         return bank.maakOver(reknr, bestemming, bedrag);
     }
 
-    private void updateLaatsteAanroep() throws InvalidSessionException {
+    private void updateLaatsteAanroep() throws InvalidSessionException, RemoteException {
         if (!isGeldig()) {
+            removeListener(listener);
             throw new InvalidSessionException("session has been expired");
         }
 
