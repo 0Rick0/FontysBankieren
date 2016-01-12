@@ -5,7 +5,7 @@ import fontys.util.*;
 import java.rmi.RemoteException;
 import java.util.*;
 
-public class Bank implements IBank {
+public class Bank implements IBank, IBankCentraleBank {
 
     /**
      *
@@ -15,6 +15,7 @@ public class Bank implements IBank {
     private final Collection<IKlant> clients;
     private int nieuwReknr;
     private final String name;
+    //private ICentralBank centralBank;
 
     public Bank(String name) {
         accounts = new HashMap<>();
@@ -72,8 +73,7 @@ public class Bank implements IBank {
 
         IRekeningTbvBank source_account = (IRekeningTbvBank) getRekening(source);
         if (source_account == null) {
-            throw new NumberDoesntExistException("account " + source
-                    + " unknown at " + name);
+            return maakOverRemote(source, destination, money);
         }
 
         Money negative = Money.difference(new Money(0, money.getCurrency()),
@@ -117,6 +117,11 @@ public class Bank implements IBank {
     @Override
     public void removeListener(int rekeningNr, IRekeningUpdateListener listener) {
         getRekening(rekeningNr).removeListener(listener);
+    }
+
+    @Override
+    public boolean maakOverRemote(int source, int destination, Money money) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
