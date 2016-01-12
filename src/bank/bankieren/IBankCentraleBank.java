@@ -5,6 +5,8 @@
  */
 package bank.bankieren;
 
+import java.rmi.RemoteException;
+
 /**
  *
  * @author Martijn
@@ -25,5 +27,5 @@ public interface IBankCentraleBank {
      * @return a boolean that returns true if the transfer was successful. 
      * it returns false if it fails.
      */
-    boolean maakOverRemote(int source, int destination, Money money);
+    boolean maakOverRemote(int source, int destination, Money money) throws RemoteException;
 }

@@ -1,9 +1,12 @@
 package bank.bankieren;
 
+import bank.centralbank.ICentralBank;
 import fontys.util.*;
 
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Bank implements IBank, IBankCentraleBank {
 
@@ -15,7 +18,7 @@ public class Bank implements IBank, IBankCentraleBank {
     private final Collection<IKlant> clients;
     private int nieuwReknr;
     private final String name;
-    //private ICentralBank centralBank;
+    private ICentralBank centralBank;
 
     public Bank(String name) {
         accounts = new HashMap<>();
@@ -73,7 +76,8 @@ public class Bank implements IBank, IBankCentraleBank {
 
         IRekeningTbvBank source_account = (IRekeningTbvBank) getRekening(source);
         if (source_account == null) {
-            return maakOverRemote(source, destination, money);
+            throw new NumberDoesntExistException("account " + destination
+                    + " unknown at " + name);
         }
 
         Money negative = Money.difference(new Money(0, money.getCurrency()),
@@ -88,8 +92,11 @@ public class Bank implements IBank, IBankCentraleBank {
 
         IRekeningTbvBank dest_account = (IRekeningTbvBank) getRekening(destination);
         if (dest_account == null) {
-            throw new NumberDoesntExistException("account " + destination
-                    + " unknown at " + name);
+            try {
+                return maakOverRemote(source, destination, money);
+            } catch (RemoteException ex) {
+                Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         synchronized (dest_account) {
             success = dest_account.muteer(money);
@@ -120,8 +127,15 @@ public class Bank implements IBank, IBankCentraleBank {
     }
 
     @Override
-    public boolean maakOverRemote(int source, int destination, Money money) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public boolean maakOverRemote(int source, int destination, Money money) throws RemoteException {
+        int result = centralBank.maakOver(source, destination, money);
+        if (result == 1) {
+            throw new RuntimeException("Cannot find the destination account.");
+        }
+        if (result == 2) {
+            throw new RuntimeException("Transfer denied by central bank.");
+        }
+        return result == 0;
     }
 
 }
