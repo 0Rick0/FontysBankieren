@@ -1,11 +1,18 @@
 package bank.bankieren;
 
+import bank.centralbank.ICentralBank;
 import fontys.util.*;
+import java.rmi.AccessException;
+import java.rmi.NotBoundException;
 
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class Bank implements IBank {
+public class Bank implements IBank, IBankCentraleBank {
 
     /**
      *
@@ -15,12 +22,23 @@ public class Bank implements IBank {
     private final Collection<IKlant> clients;
     private int nieuwReknr;
     private final String name;
+    private ICentralBank centralBank;
+    private Registry registry;
 
     public Bank(String name) {
         accounts = new HashMap<>();
         clients = new ArrayList<>();
         nieuwReknr = 100000000;
         this.name = name;
+        
+        try {
+            registry = LocateRegistry.getRegistry("localhost", 420);
+            centralBank = (ICentralBank)registry.lookup("CentraleBank");
+        } catch (RemoteException ex) {
+            Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NotBoundException ex) {
+            Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
@@ -72,7 +90,7 @@ public class Bank implements IBank {
 
         IRekeningTbvBank source_account = (IRekeningTbvBank) getRekening(source);
         if (source_account == null) {
-            throw new NumberDoesntExistException("account " + source
+            throw new NumberDoesntExistException("account " + destination
                     + " unknown at " + name);
         }
 
@@ -88,8 +106,19 @@ public class Bank implements IBank {
 
         IRekeningTbvBank dest_account = (IRekeningTbvBank) getRekening(destination);
         if (dest_account == null) {
-            throw new NumberDoesntExistException("account " + destination
+            if(centralBank != null)
+            {
+                try {
+                    return maakOverRemote(source, destination, money);
+                } catch (RemoteException ex) {
+                    Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            else
+            {
+                throw new NumberDoesntExistException("account " + destination
                     + " unknown at " + name);
+            }
         }
         synchronized (dest_account) {
             success = dest_account.muteer(money);
@@ -117,6 +146,18 @@ public class Bank implements IBank {
     @Override
     public void removeListener(int rekeningNr, IRekeningUpdateListener listener) {
         getRekening(rekeningNr).removeListener(listener);
+    }
+
+    @Override
+    public boolean maakOverRemote(int source, int destination, Money money) throws RemoteException {
+        int result = centralBank.maakOver(source, destination, money);
+        if (result == 1) {
+            throw new RuntimeException("Cannot find the destination account.");
+        }
+        if (result == 2) {
+            throw new RuntimeException("Transfer denied by central bank.");
+        }
+        return result == 0;
     }
 
 }
