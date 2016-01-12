@@ -7,11 +7,17 @@ package bank.centralbank;
 
 import bank.bankieren.IBankCentraleBank;
 import bank.bankieren.Money;
+import java.rmi.AccessException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -21,10 +27,17 @@ public class CentralBank extends UnicastRemoteObject implements ICentralBank {
 
     private Map<String, IBankCentraleBank> banken;
     private Map<Integer, String> rekeningen;
+    private Registry registry;
 
     public CentralBank() throws RemoteException {
         banken = new HashMap<>();
         rekeningen = new HashMap<>();
+        registry = LocateRegistry.createRegistry(420);
+        try {
+            registry.bind("CentralBank", this);
+        } catch (AlreadyBoundException | AccessException ex) {
+            Logger.getLogger(CentralBank.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
