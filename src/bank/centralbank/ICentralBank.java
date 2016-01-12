@@ -28,12 +28,11 @@ public interface ICentralBank extends Remote {
     
     /**
      * registreer een rekening op de centrale bank
-     * @param rekening de rekening die geregistreerd moet worden
      * @param bank de bank waar de rekening bestaat
-     * @return of de rekening kan worden toegevoegd, het kan bijvoorbeeld niet als de bank niet geregistreerd is of als de rekening al bestaat
+     * @return Het nieuwe rekening nummer
      * @exception RemoteException als er een RI fout optreed
      */
-    public boolean registreerRekening(int rekening, String bank) throws RemoteException;
+    public int registreerRekening(String bank) throws RemoteException;
     
     /**
      * onregistreer een rekening bij de centrale bank, de rekening is hierna niet meer bekend

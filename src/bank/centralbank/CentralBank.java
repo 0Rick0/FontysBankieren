@@ -21,6 +21,7 @@ public class CentralBank extends UnicastRemoteObject implements ICentralBank {
 
     private Map<String, IBankCentraleBank> banken;
     private Map<Integer, String> rekeningen;
+    private int newNummer = 100000;
 
     public CentralBank() throws RemoteException {
         banken = new HashMap<>();
@@ -34,26 +35,24 @@ public class CentralBank extends UnicastRemoteObject implements ICentralBank {
             return 1;
         }
         IBankCentraleBank b = banken.get(rekeningen.get(val.get()));
-        //+maakOverRemote(source : int, destenation : int, money : bank.bankieren.Money) : boolean
-        if(!false/*b.maakOverRemote(source,target,money)*/){
+        
+        if(!b.maakOverRemote(source, target, money)){
             return 2;
         }
         return 0;
     }
 
     @Override
-    public boolean registreerRekening(int rekening, String bank) throws RemoteException {
-        if(rekeningen.containsKey(rekening)){
-            return false;//rekening already exists
-        }
+    public synchronized int registreerRekening(String bank) throws RemoteException {
+       
         Optional<String> bankName = banken.keySet().stream().filter((b)->b.equalsIgnoreCase(bank)).findFirst();
         if(!bankName.isPresent()){
-            return false;//bank doesn't exists
+            return -1;//bank doesn't exists
         }
         
-        rekeningen.put(rekening, bankName.get());
+        rekeningen.put(newNummer, bankName.get());
         
-        return true;
+        return newNummer++;//first use then increment
     }
 
     @Override

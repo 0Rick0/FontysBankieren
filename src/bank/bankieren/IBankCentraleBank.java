@@ -5,19 +5,20 @@
  */
 package bank.bankieren;
 
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 /**
  *
  * @author Martijn
  */
-public interface IBankCentraleBank {
+public interface IBankCentraleBank extends Remote {
 
     /**
      * Method that returns the name of the bank.
      * @return the name of the bank.
      */
-    String getName();
+//    String getName();
     
     /**
      * Method that transfers money from one account to the other.

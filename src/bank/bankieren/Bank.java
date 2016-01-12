@@ -8,11 +8,12 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Bank implements IBank, IBankCentraleBank {
+public class Bank extends UnicastRemoteObject implements IBank, IBankCentraleBank {
 
     /**
      *
@@ -24,8 +25,9 @@ public class Bank implements IBank, IBankCentraleBank {
     private final String name;
     private ICentralBank centralBank;
     private Registry registry;
-
-    public Bank(String name) {
+    private boolean registered = false;
+    
+    public Bank(String name) throws RemoteException {
         accounts = new HashMap<>();
         clients = new ArrayList<>();
         nieuwReknr = 100000000;
@@ -39,8 +41,17 @@ public class Bank implements IBank, IBankCentraleBank {
         } catch (NotBoundException ex) {
             Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
         }
+        register();
     }
 
+    private void register(){
+        try {
+            centralBank.registreerBank(name, (IBankCentraleBank)this);
+        } catch (RemoteException ex) {
+            Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
     @Override
     public int openRekening(String name, String city) {
         if (name == null || city == null) {
@@ -52,10 +63,17 @@ public class Bank implements IBank, IBankCentraleBank {
 
         IKlant klant = getKlant(name, city);
         synchronized (accounts) {
-            IRekeningTbvBank account = new Rekening(nieuwReknr, klant, Money.EURO);
-            accounts.put(nieuwReknr, account);
-            nieuwReknr++;
-            return nieuwReknr - 1;
+            int nextRekening;
+            try {
+                nextRekening = centralBank.registreerRekening(this.name);
+            } catch (RemoteException ex) {
+                Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+                return -1;
+            }
+            if(nextRekening == -1) return -1;
+            IRekeningTbvBank account = new Rekening(nextRekening, klant, Money.EURO);
+            accounts.put(nextRekening, account);
+            return nextRekening;
         }
     }
 
@@ -109,7 +127,7 @@ public class Bank implements IBank, IBankCentraleBank {
             if(centralBank != null)
             {
                 try {
-                    return maakOverRemote(source, destination, money);
+                    success = centralBank.maakOver(source, destination, money)==0;
                 } catch (RemoteException ex) {
                     Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -119,9 +137,10 @@ public class Bank implements IBank, IBankCentraleBank {
                 throw new NumberDoesntExistException("account " + destination
                     + " unknown at " + name);
             }
-        }
-        synchronized (dest_account) {
-            success = dest_account.muteer(money);
+        }else{
+            synchronized (dest_account) {
+                success = dest_account.muteer(money);
+            }
         }
 
         if (!success) // rollback
@@ -150,14 +169,12 @@ public class Bank implements IBank, IBankCentraleBank {
 
     @Override
     public boolean maakOverRemote(int source, int destination, Money money) throws RemoteException {
-        int result = centralBank.maakOver(source, destination, money);
-        if (result == 1) {
-            throw new RuntimeException("Cannot find the destination account.");
+        
+        IRekeningTbvBank dest_account = (IRekeningTbvBank) getRekening(destination);
+        
+        synchronized (dest_account) {
+            return dest_account.muteer(money);
         }
-        if (result == 2) {
-            throw new RuntimeException("Transfer denied by central bank.");
-        }
-        return result == 0;
     }
 
 }
