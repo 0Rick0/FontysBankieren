@@ -2,8 +2,12 @@ package bank.bankieren;
 
 import bank.centralbank.ICentralBank;
 import fontys.util.*;
+import java.rmi.AccessException;
+import java.rmi.NotBoundException;
 
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -19,12 +23,22 @@ public class Bank implements IBank, IBankCentraleBank {
     private int nieuwReknr;
     private final String name;
     private ICentralBank centralBank;
+    private Registry registry;
 
     public Bank(String name) {
         accounts = new HashMap<>();
         clients = new ArrayList<>();
         nieuwReknr = 100000000;
         this.name = name;
+        
+        try {
+            registry = LocateRegistry.getRegistry("localhost", 420);
+            centralBank = (ICentralBank)registry.lookup("CentraleBank");
+        } catch (RemoteException ex) {
+            Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NotBoundException ex) {
+            Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
@@ -92,10 +106,18 @@ public class Bank implements IBank, IBankCentraleBank {
 
         IRekeningTbvBank dest_account = (IRekeningTbvBank) getRekening(destination);
         if (dest_account == null) {
-            try {
-                return maakOverRemote(source, destination, money);
-            } catch (RemoteException ex) {
-                Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+            if(centralBank != null)
+            {
+                try {
+                    return maakOverRemote(source, destination, money);
+                } catch (RemoteException ex) {
+                    Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            else
+            {
+                throw new NumberDoesntExistException("account " + destination
+                    + " unknown at " + name);
             }
         }
         synchronized (dest_account) {
