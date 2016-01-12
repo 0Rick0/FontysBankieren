@@ -5,7 +5,7 @@
  */
 package bank.centralbank;
 
-import bank.bankieren.Bank;
+import bank.bankieren.IBankCentraleBank;
 import bank.bankieren.Money;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -19,7 +19,7 @@ import java.util.Optional;
  */
 public class CentralBank extends UnicastRemoteObject implements ICentralBank {
 
-    private Map<String, Bank> banken;
+    private Map<String, IBankCentraleBank> banken;
     private Map<Integer, String> rekeningen;
 
     public CentralBank() throws RemoteException {
@@ -33,7 +33,7 @@ public class CentralBank extends UnicastRemoteObject implements ICentralBank {
         if (!val.isPresent()) {
             return 1;
         }
-        Bank b = banken.get(rekeningen.get(val.get()));
+        IBankCentraleBank b = banken.get(rekeningen.get(val.get()));
         //+maakOverRemote(source : int, destenation : int, money : bank.bankieren.Money) : boolean
         if(!false/*b.maakOverRemote(source,target,money)*/){
             return 2;
@@ -69,7 +69,7 @@ public class CentralBank extends UnicastRemoteObject implements ICentralBank {
     }
 
     @Override
-    public boolean registreerBank(String naam, Bank bank) throws RemoteException {
+    public boolean registreerBank(String naam, IBankCentraleBank bank) throws RemoteException {
         if(banken.keySet().stream().anyMatch((b)->b.equals(naam))){
             return false;
         }
@@ -78,7 +78,7 @@ public class CentralBank extends UnicastRemoteObject implements ICentralBank {
     }
 
     @Override
-    public boolean onregistreerBank(String naam, Bank bank) throws RemoteException {
+    public boolean onregistreerBank(String naam, IBankCentraleBank bank) throws RemoteException {
         Optional<String> oBankNaam = banken.keySet().stream().filter((b)->b.equalsIgnoreCase(naam)).findFirst();
         if(!oBankNaam.isPresent()){
             return false;//bank not registered

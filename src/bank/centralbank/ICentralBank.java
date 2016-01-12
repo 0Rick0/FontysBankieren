@@ -5,7 +5,7 @@
  */
 package bank.centralbank;
 
-import bank.bankieren.Bank;
+import bank.bankieren.IBankCentraleBank;
 import bank.bankieren.Money;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -51,7 +51,7 @@ public interface ICentralBank extends Remote {
      * @return of de bank toegevoegd kan worden, niet als de bank al bestaat
      * @exception RemoteException als er een RMI fout optreed
      */
-    public boolean registreerBank(String naam, Bank bank) throws RemoteException;
+    public boolean registreerBank(String naam, IBankCentraleBank bank) throws RemoteException;
     
     /**
      * onregistreer een bank bij de centrale bank
@@ -60,5 +60,5 @@ public interface ICentralBank extends Remote {
      * @return of de bank verwijderd kan worden
      * @exception RemoteException als er een RMI fout optreed
      */
-    public boolean onregistreerBank(String naam, Bank bank) throws RemoteException;
+    public boolean onregistreerBank(String naam, IBankCentraleBank bank) throws RemoteException;
 }
